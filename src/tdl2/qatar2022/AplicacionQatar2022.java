@@ -7,7 +7,7 @@ public class AplicacionQatar2022 {
 	static Scanner sc = new Scanner(System.in);
 	public static void main(String[] args) {
 		try{
-			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/qatar2022","sr","pssw");
+			Connection con = DriverManager.getConnection("jdbc:mysql://localhost/mundial_futbol_2022","root","");
 			int opcion = -1;
 			while (opcion!=0) {
 				System.out.println("Elija una opcion:\n1 : Ingresar pais.\n2 : Ingresar furbolista.\n3 : Ingresar sede.\n4 : Editar sede.\n5 : Eliminar sede.\n0 : Salir");
