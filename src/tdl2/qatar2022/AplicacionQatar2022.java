@@ -7,11 +7,12 @@ public class AplicacionQatar2022 {
 	static Scanner sc = new Scanner(System.in);
 	public static void main(String[] args) {
 		try{
-			Connection con = DriverManager.getConnection("jdbc:mysql://localhost/mundial_futbol_2022","root","");
+			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/mundial_futbol_2022","root","");
 			int opcion = -1;
 			while (opcion!=0) {
-				System.out.println("Elija una opcion:\n1 : Ingresar pais.\n2 : Ingresar furbolista.\n3 : Ingresar sede.\n4 : Editar sede.\n5 : Eliminar sede.\n0 : Salir");
+				System.out.println("Elija una opcion:\n1 : Ingresar pais.\n2 : Ingresar futbolista.\n3 : Ingresar sede.\n4 : Editar sede.\n5 : Eliminar sede.\n0 : Salir");
 				opcion = sc.nextInt();
+				sc.nextLine();
 				switch (opcion) {
 				case 5:
 					eliminarSede(con);
@@ -38,22 +39,23 @@ public class AplicacionQatar2022 {
 			System.out.println("Error de SQL: "+e.getMessage());
 		}
 	}
-	
+// BUSCAR PAIS (funciona)
 	public static Pais buscarPais(String nombre,Connection con) {
 		Pais p=null;
 		try{
 			 Statement st = con.createStatement();
 			 ResultSet rs= st.executeQuery("SELECT * FROM pais");
-			 while (rs.next() && !(rs.getString("nombre").equals(nombre))){
+			 boolean valido = true;
+			 while (rs.next() && valido){
+					 if (rs.getString("nombre").equals(nombre)) {
+						 p = new Pais();
+						 p.setNombre(rs.getString("nombre"));
+						 p.setIdioma(rs.getString("idioma"));
+						 valido=false;
+					 }
 				 }
-			 if (rs.getString("nombre").equals(nombre)) {
-				 p = new Pais();
-				 p.setNombre(rs.getString("nombre"));
-				 p.setIdioma(rs.getString("idioma"));
-			 }
 			 rs.close();
 			 st.close();
-			 con.close();
 		 } catch (java.sql.SQLException e) {
 			 System.out.println("Error de SQL: "+e.getMessage());
 		 }
@@ -80,7 +82,6 @@ public class AplicacionQatar2022 {
 			 }
 			 rs.close();
 			 st.close();
-			 con.close();
 		 } catch (java.sql.SQLException e) {
 			 System.out.println("Error de SQL: "+e.getMessage());
 		 }
@@ -96,15 +97,13 @@ public class AplicacionQatar2022 {
 		String nombre = sc.nextLine();
 		if (buscarPais(nombre,con)!=null) System.out.println("El pais ingresado ya existe.");
 		else {
-			System.out.println("Ingresar idioma ");
+			System.out.println("Ingresar idioma: ");
 			String idioma = sc.nextLine();
 			try{
 				 Statement st = con.createStatement();
-				 int res=st.executeUpdate("INSERT INTO pais (nombre,idioma) VALUES('"+nombre+"','"+idioma+"')");
-				 if (res==0) System.out.println("Agregado exitosamente");
-				 else System.out.println("Ocurrio un error");
+				 st.executeUpdate("INSERT INTO pais (nombre,idioma) VALUES('"+nombre+"','"+idioma+"')");
+				 System.out.println("Agregado exitosamente");
 				 st.close();
-				 con.close();
 			 } catch (java.sql.SQLException e) {
 				 System.out.println("Error de SQL: "+e.getMessage());
 			 }
@@ -143,9 +142,9 @@ public class AplicacionQatar2022 {
 						 if (opcion.equals("SI")) {
 							 valido = true;
 							 // INSERTAR DATOS
-							 int res=st.executeUpdate("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,mail,idpais) VALUES('"+nombre+"','"+apellido+"','"+docIdentidad+"','"+telefono+"','"+mail+"','"+paisID+"')");
-							 if (res==0) System.out.println("Agregado exitosamente");
-							 else System.out.println("Ocurrio un error");
+							 st.executeUpdate("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,mail,idpais) VALUES('"+nombre+"','"+apellido+"','"+docIdentidad+"','"+telefono+"','"+mail+"','"+paisID+"')");
+							 System.out.println("Agregado exitosamente");
+
 						 } else {
 							 if (opcion.equals("NO")) {
 								 valido = true;
@@ -158,7 +157,6 @@ public class AplicacionQatar2022 {
 					 }
 					 rs.close();
 					 st.close();
-					 con.close();
 				 } catch (java.sql.SQLException e) {
 					 System.out.println("Error de SQL: "+e.getMessage());
 				 }
@@ -182,7 +180,6 @@ public class AplicacionQatar2022 {
 				if (res==0) System.out.println("Agregado exitosamente");
 				else System.out.println("Ocurrio un error");
 				st.close();
-				con.close();
 			 } catch (java.sql.SQLException e) {
 				System.out.println("Error de SQL: "+e.getMessage());
 			 }
@@ -203,12 +200,11 @@ public class AplicacionQatar2022 {
 					System.out.println("Ingresar pais: ");
 					String pais = sc.nextLine();
 					ResultSet rs= st.executeQuery("SELECT * FROM pais WHERE nombre = "+pais);
-					int res=st.executeUpdate("INSERT INTO sede (nombre,capacidad,idpais) VALUES('"+nombre+"','"+capacidad+"','"+rs.getInt("idpais")+"') where nombre ="+nombre);
+					int res=st.executeUpdate("UPDATE sede (nombre,capacidad,idpais) VALUES('"+nombre+"','"+capacidad+"','"+rs.getInt("idpais")+"') where nombre ="+nombre);
 					if (res==0) System.out.println("Editado exitosamente");
 					else System.out.println("Ocurrio un error");
 					rs.close();
 					st.close();
-					con.close();
 				}
 			 } catch (java.sql.SQLException e) {
 				 System.out.println("Error de SQL: "+e.getMessage());
@@ -225,7 +221,6 @@ public class AplicacionQatar2022 {
 					st.executeUpdate("DELETE FROM sede WHERE nombre = "+nombre);
 					System.out.println("Eliminado exitosamente");
 					st.close();
-					con.close();
 				}
 			 } catch (java.sql.SQLException e) {
 				 System.out.println("Error de SQL: "+e.getMessage());
