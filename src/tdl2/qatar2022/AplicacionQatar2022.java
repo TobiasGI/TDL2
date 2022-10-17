@@ -60,20 +60,23 @@ public class AplicacionQatar2022 {
 		 return p;
 	}
 // NO SE SI HAY Q CHECKEAR Q NO EXISTA, DEBERIA CHECKEAR CON TELEFONO MAS Q CON NOMBRE	
-	public static Futbolista buscarFutbolista(String nombre,Connection con) {
+	public static Futbolista buscarFutbolista(int telefono,Connection con) {
 		Futbolista f=null;
 		try{
 			 Statement st = con.createStatement();
-			 ResultSet rs= st.executeQuery("SELECT nombre FROM futbolista");
-			 while (rs.next() && !(rs.getString("nombre").equals(nombre))){
+			 ResultSet rs= st.executeQuery("SELECT * FROM futbolista");
+			 while (rs.next() && !(rs.getInt("telefono")==telefono)){
 				 }
-			 if (rs.getString("nombre").equals(nombre)) {
+			 if (rs.getInt("telefono")==telefono) {
 				 f = new Futbolista();
 				 f.setNombre(rs.getString("nombre"));
 				 f.setApellido(rs.getString("apellido"));
 				 f.setDocId(rs.getInt("docIdentidad"));
 				 f.setTeléfono(rs.getInt("telefono"));
 				 f.setEmail(rs.getString("mail"));
+				 int idpais = rs.getInt("idpais");
+				 rs= st.executeQuery("SELECT * FROM pais WHERE idpais = "+idpais); 
+				 f.setPaís(rs.getString("nombre"),rs.getString("idioma"));
 			 }
 			 rs.close();
 			 st.close();
@@ -114,54 +117,78 @@ public class AplicacionQatar2022 {
 		String nombre = sc.nextLine();
 		System.out.println("Ingresar apellido: ");
 		String apellido = sc.nextLine();
-		System.out.println("Ingresar documento de identidad: ");
-		int docIdentidad = sc.nextInt();
-		sc.nextLine();
 		System.out.println("Ingresar telefono: ");
 		int telefono = sc.nextInt();
 		sc.nextLine();
-		System.out.println("Ingresar mail: ");
-		String mail = sc.nextLine();
-			try{
-				 Statement st = con.createStatement();
-				 ResultSet rs= st.executeQuery("SELECT idpais,nombre FROM pais");
-				 System.out.println("Elija pais:");
-				 while (rs.next()){
-					 System.out.println(rs.getInt("idpais")+" : "+rs.getString("nombre"));
-				 }
-				 int paisID = sc.nextInt();
-				 rs= st.executeQuery("SELECT nombre FROM pais WHERE idpais = "+paisID);
-				 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" a "+rs.getString("pais")+"? SI / NO");
-				 String opcion = sc.nextLine();
-				 boolean valido = false;
-				 while (!valido) {
-					 if (opcion.equals("SI")) {
-						 valido = true;
-						 // INSERTAR DATOS
-						 int res=st.executeUpdate("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,mail,idpais) VALUES('"+nombre+"','"+apellido+"','"+docIdentidad+"','"+telefono+"','"+mail+"','"+paisID+"')");
-						 if (res==0) System.out.println("Agregado exitosamente");
-						 else System.out.println("Ocurrio un error");
-					 } else {
-						 if (opcion.equals("NO")) {
+		if (buscarFutbolista(telefono,con)!=null) System.out.println("El futbolista ingresado ya existe.");
+		else {
+			System.out.println("Ingresar documento de identidad: ");
+			int docIdentidad = sc.nextInt();
+			sc.nextLine();
+			System.out.println("Ingresar mail: ");
+			String mail = sc.nextLine();
+				try{
+					 Statement st = con.createStatement();
+					 ResultSet rs= st.executeQuery("SELECT idpais,nombre FROM pais");
+					 System.out.println("Elija pais:");
+					 while (rs.next()){
+						 System.out.println(rs.getInt("idpais")+" : "+rs.getString("nombre"));
+					 }
+					 int paisID = sc.nextInt();
+					 rs= st.executeQuery("SELECT nombre FROM pais WHERE idpais = "+paisID);
+					 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" a "+rs.getString("pais")+"? SI / NO");
+					 String opcion = sc.nextLine();
+					 boolean valido = false;
+					 while (!valido) {
+						 if (opcion.equals("SI")) {
 							 valido = true;
+							 // INSERTAR DATOS
+							 int res=st.executeUpdate("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,mail,idpais) VALUES('"+nombre+"','"+apellido+"','"+docIdentidad+"','"+telefono+"','"+mail+"','"+paisID+"')");
+							 if (res==0) System.out.println("Agregado exitosamente");
+							 else System.out.println("Ocurrio un error");
 						 } else {
-							 System.out.println("Invalido");
-							 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" a "+rs.getString("pais")+"? SI / NO");
-							 opcion = sc.nextLine();
+							 if (opcion.equals("NO")) {
+								 valido = true;
+							 } else {
+								 System.out.println("Invalido");
+								 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" en "+rs.getString("pais")+"? SI / NO");
+								 opcion = sc.nextLine();
+							 }
 						 }
 					 }
+					 rs.close();
+					 st.close();
+					 con.close();
+				 } catch (java.sql.SQLException e) {
+					 System.out.println("Error de SQL: "+e.getMessage());
 				 }
-				 rs.close();
-				 st.close();
-				 con.close();
-			 } catch (java.sql.SQLException e) {
-				 System.out.println("Error de SQL: "+e.getMessage());
-			 }
+		}
 	}	
 // INGRESAR SEDE	
 	public static void ingresarSede(Connection con) {
-		
+		System.out.println("Ingresar sede: ");
+		String nombre = sc.nextLine();
+		if (buscarSede(nombre,con)!=null) System.out.println("La sede ingresado ya existe.");
+		else {
+			try{
+				Statement st = con.createStatement();
+				System.out.println("Ingresar capacidad: ");
+				int capacidad = sc.nextInt();
+				sc.nextLine();
+				System.out.println("Ingresar pais: ");
+				String pais = sc.nextLine();
+				ResultSet rs= st.executeQuery("SELECT * FROM pais WHERE nombre = "+pais);
+				int res=st.executeUpdate("INSERT INTO sede (nombre,capacidad,idpais) VALUES('"+nombre+"','"+capacidad+"','"+rs.getInt("idpais")+"')");
+				if (res==0) System.out.println("Agregado exitosamente");
+				else System.out.println("Ocurrio un error");
+				st.close();
+				con.close();
+			 } catch (java.sql.SQLException e) {
+				System.out.println("Error de SQL: "+e.getMessage());
+			 }
+		}
 	}
+	
 //EDITAR SEDE	
 	public static void editarSede(Connection con) {
 		System.out.println("Ingresar sede: ");
@@ -171,11 +198,12 @@ public class AplicacionQatar2022 {
 				else {
 					Statement st = con.createStatement();	
 					System.out.println("Ingresar capacidad: ");
-					String capacidad = sc.nextLine();
+					int capacidad = sc.nextInt();
+					sc.nextLine();
 					System.out.println("Ingresar pais: ");
 					String pais = sc.nextLine();
-					ResultSet rs= st.executeQuery("SELECT idpais FROM pais WHERE nombre = "+pais);
-					int res=st.executeUpdate("INSERT INTO pais (nombre,capacidad,idpais) VALUES('"+nombre+"','"+capacidad+"','"+rs.getInt("idpais")+"')");
+					ResultSet rs= st.executeQuery("SELECT * FROM pais WHERE nombre = "+pais);
+					int res=st.executeUpdate("INSERT INTO sede (nombre,capacidad,idpais) VALUES('"+nombre+"','"+capacidad+"','"+rs.getInt("idpais")+"') where nombre ="+nombre);
 					if (res==0) System.out.println("Editado exitosamente");
 					else System.out.println("Ocurrio un error");
 					rs.close();
@@ -186,9 +214,22 @@ public class AplicacionQatar2022 {
 				 System.out.println("Error de SQL: "+e.getMessage());
 			 }
 	}
-//ELIMINAR SEDE	(NO SE COMO ELIMINAR, MAS QUE PONER TODA LA FILA EN BLANCO)
+//ELIMINAR SEDE	
 	public static void eliminarSede(Connection con) {
-		
+		System.out.println("Ingresar sede: ");
+		String nombre = sc.nextLine();
+			try{
+				if (buscarSede(nombre,con)==null) System.out.println("La sede ingresada no existe.");
+				else {
+					Statement st = con.createStatement();	
+					st.executeUpdate("DELETE FROM sede WHERE nombre = "+nombre);
+					System.out.println("Eliminado exitosamente");
+					st.close();
+					con.close();
+				}
+			 } catch (java.sql.SQLException e) {
+				 System.out.println("Error de SQL: "+e.getMessage());
+			 }
 	}
 }
 

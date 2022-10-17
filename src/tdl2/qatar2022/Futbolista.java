@@ -56,4 +56,8 @@ public class Futbolista {
 	public void setPaís(Pais país) {
 		this.país = país;
 	}
+	public void setPaís(String nombre, String idioma) {
+		Pais p = new Pais(nombre,idioma);
+		this.país = p;
+	}
 }
