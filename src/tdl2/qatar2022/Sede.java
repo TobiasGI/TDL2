@@ -32,5 +32,9 @@ public class Sede {
 	public void setPais(Pais pais) {
 		this.pais = pais;
 	}
+	public void setPais(String nombre, String idioma) {
+		Pais p = new Pais(nombre,idioma);
+		this.pais = p;
+	}
 
 }
