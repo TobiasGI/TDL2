@@ -10,7 +10,7 @@ public class AplicacionQatar2022 {
 			Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/mundial_futbol_2022","root","");
 			int opcion = -1;
 			while (opcion!=0) {
-				System.out.println("Elija una opcion:\n1 : Ingresar pais.\n2 : Ingresar futbolista.\n3 : Ingresar sede.\n4 : Editar sede.\n5 : Eliminar sede.\n0 : Salir");
+				System.out.println("Elija una opcion:\n1 : Ingresar pais.\n2 : Ingresar futbolista.\n3 : Ingresar sede.\n4 : Editar sede.\n5 : Eliminar sede.\n0 : Salir.");
 				opcion = sc.nextInt();
 				sc.nextLine();
 				switch (opcion) {

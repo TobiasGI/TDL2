@@ -31,25 +31,33 @@ public class Utiles {
 			 }
 			 return p;
 		}
-	// NO SE SI HAY Q CHECKEAR Q NO EXISTA, DEBERIA CHECKEAR CON TELEFONO MAS Q CON NOMBRE	
+	// BUSCAR FUTBOLISTA
 		public static Futbolista buscarFutbolista(int telefono,Connection con) {
 			Futbolista f=null;
 			try{
 				 Statement st = con.createStatement();
 				 ResultSet rs= st.executeQuery("SELECT * FROM futbolista");
-				 while (rs.next() && !(rs.getInt("telefono")==telefono)){
-					 }
-				 if (rs.getInt("telefono")==telefono) {
-					 f = new Futbolista();
-					 f.setNombre(rs.getString("nombre"));
-					 f.setApellido(rs.getString("apellido"));
-					 f.setDocId(rs.getInt("docIdentidad"));
-					 f.setTeléfono(rs.getInt("telefono"));
-					 f.setEmail(rs.getString("mail"));
-					 int idpais = rs.getInt("idpais");
-					 rs= st.executeQuery("SELECT * FROM pais WHERE idpais = "+idpais); 
-					 f.setPaís(rs.getString("nombre"),rs.getString("idioma"));
-				 }
+				 boolean valido = true;
+				 while (rs.next() && valido){
+					 if (rs.getInt("telefono")==telefono) {
+						f = new Futbolista();
+						f.setNombre(rs.getString("nombre"));
+						f.setApellido(rs.getString("apellido"));
+						f.setDocId(rs.getInt("docIdentidad"));
+						f.setTeléfono(rs.getInt("telefono"));
+						f.setEmail(rs.getString("email"));
+						int idpais = rs.getInt("idpais");
+						PreparedStatement pst = con.prepareStatement("SELECT * FROM pais WHERE idpais = ?");
+						pst.clearParameters();
+						pst.setInt(1,idpais);
+						ResultSet rs2 = pst.executeQuery();
+						rs2.next();
+						f.setPaís(rs2.getString("nombre"),rs2.getString("idioma"));
+						valido = false;
+						rs2.close();
+						pst.close();
+					}
+				}
 				 rs.close();
 				 st.close();
 			 } catch (java.sql.SQLException e) {
@@ -126,22 +134,30 @@ public class Utiles {
 				System.out.println("Ingresar mail: ");
 				String mail = sc.nextLine();
 					try{
-						 Statement st = con.createStatement();
-						 ResultSet rs= st.executeQuery("SELECT idpais,nombre FROM pais");
-						 System.out.println("Elija pais:");
-						 while (rs.next()){
-							 System.out.println(rs.getInt("idpais")+" : "+rs.getString("nombre"));
-						 }
-						 int paisID = sc.nextInt();
-						 rs= st.executeQuery("SELECT nombre FROM pais WHERE idpais = "+paisID);
-						 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" a "+rs.getString("pais")+"? SI / NO");
-						 String opcion = sc.nextLine();
-						 boolean valido = false;
-						 while (!valido) {
+						Statement st = con.createStatement();
+						ResultSet rs= st.executeQuery("SELECT idpais,nombre FROM pais");
+						System.out.println("Elija pais:");
+						while (rs.next()){
+							System.out.println(rs.getInt("idpais")+" : "+rs.getString("nombre"));
+						}
+						int paisID = sc.nextInt();
+						sc.nextLine(); 
+						PreparedStatement pst = con.prepareStatement("SELECT * FROM pais WHERE idpais = ?");
+						pst.clearParameters();
+						pst.setInt(1,paisID);
+						ResultSet rs2 = pst.executeQuery();
+						rs2.next();
+						 
+						System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" a "+rs2.getString("nombre")+"? SI / NO");
+						String opcion = sc.nextLine();
+						
+						while (!opcion.equals("SI") && !opcion.equals("NO")) {
+							System.out.println("Opcion invalida, intente de nuevo");
+							opcion = sc.nextLine();
+						}
 							 if (opcion.equals("SI")) {
-								 valido = true;
 								 // INSERTAR DATOS
-								 PreparedStatement pst = con.prepareStatement("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,mail,idpais) VALUES(?,?,?,?,?)");
+								 pst = con.prepareStatement("INSERT INTO futbolista (nombre,apellido,docIdentidad,telefono,email,idpais) VALUES(?,?,?,?,?,?)");
 								 pst.setString(1,nombre);
 								 pst.setString(2,apellido);
 								 pst.setInt(3,docIdentidad);
@@ -151,21 +167,13 @@ public class Utiles {
 								 pst.executeUpdate();
 								 pst.close();
 								 System.out.println("Agregado exitosamente");
-
-							 } else {
-								 if (opcion.equals("NO")) {
-									 valido = true;
-								 } else {
-									 System.out.println("Invalido");
-									 System.out.println("¿Quiere agregar a "+nombre+" "+apellido+" en "+rs.getString("pais")+"? SI / NO");
-									 opcion = sc.nextLine();
-								 }
 							 }
-						 }
-						 rs.close();
-						 st.close();
+						rs2.close();
+						rs.close();
+						st.close();
+						pst.close();
 					 } catch (java.sql.SQLException e) {
-						 System.out.println("Error de SQL: "+e.getMessage());
+						System.out.println("Error de SQL: "+e.getMessage());
 					 }
 			}
 		}	
@@ -237,7 +245,6 @@ public class Utiles {
 								rs2.close();
 							}
 						}
-						
 						PreparedStatement pst = con.prepareStatement("SELECT * FROM pais WHERE nombre =?");
 						pst.clearParameters();
 						pst.setString(1,pais);
@@ -251,6 +258,7 @@ public class Utiles {
 						pst.executeUpdate();
 						rs.close();
 						pst.close();
+						System.out.println("Editado exitosamente.");
 					}
 				 } catch (java.sql.SQLException e) {
 					 System.out.println("Error de SQL: "+e.getMessage());
@@ -258,15 +266,17 @@ public class Utiles {
 		}
 	//ELIMINAR SEDE	
 		public static void eliminarSede(Connection con) {
-			System.out.println("Ingresar sede: ");
+			System.out.println("Ingresar sede: "); // DEBERIA CAMBIARSE POR UN LISTAR SEDES, Y QUE ELIJAN UNA
 			String nombre = sc.nextLine();
 				try{
 					if (buscarSede(nombre,con)==null) System.out.println("La sede ingresada no existe.");
 					else {
-						Statement st = con.createStatement();	
-						st.executeUpdate("DELETE FROM sede WHERE nombre = "+nombre);
+						PreparedStatement pst = con.prepareStatement("DELETE FROM sede WHERE nombre = ?");
+						pst.clearParameters();
+						pst.setString(1,nombre);
+						pst.executeUpdate();
 						System.out.println("Eliminado exitosamente");
-						st.close();
+						pst.close();
 					}
 				 } catch (java.sql.SQLException e) {
 					 System.out.println("Error de SQL: "+e.getMessage());
